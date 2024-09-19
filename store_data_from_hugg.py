@@ -11,7 +11,7 @@ api = HfApi()
 # list_ = list(set([i['folder'] for i in json.load(open(temp_path, "r"))]))
 # id_to_path_ = {i.split('/')[-1]: os.path.join(*i.split('/')[:-1]) for i in list_}
 
-path_to_meta_data = "/share/data/drive_4/open_agi_data/YouTube_files_train_val.json"
+path_to_meta_data = "./YouTube_files_train_val.json"
 num_models = 8
 
 id_to_path = json.load(open(path_to_meta_data, "r"))
@@ -30,7 +30,7 @@ for repo_link in hf_model_repos.keys():
     hf_model_repos[repo_link] = keep_files
 all_files = set(list(chain.from_iterable(list(hf_model_repos.values()))))
 
-root_path = '/share/data/drive_4/open_agi_data/downloaded'
+root_path = '/scratch/project_465000695/llm/amine/YouTube_raw'
 for repo_id in hf_model_repos.keys():
     for filename in hf_model_repos[repo_id]:
         og_id = filename.replace('<START>', '').replace(' ', '')
