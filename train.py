@@ -14,6 +14,7 @@ import time
 import torch
 import subprocess
 import multiprocessing
+
 api = HfApi()
 
 # temp_path = "/share/data/drive_4/open_agi_data/annotations/OpenDV-YouTube-Language/10hz_YouTube_val.json"
@@ -189,4 +190,32 @@ def remove_file_if_exists(file_path):
             os.remove(file_path)
             print(f"File '{file_path}' has been removed.")
         else:
-            pr
+            print(f"File '{file_path}' does not exist.")
+    except Exception as e:
+        print(f"Error occurred while trying to remove file: {e}")
+def process_tar_to_arrow_tar(tar_input_path, batch_size=50):
+    try:
+        convert_tar_to_arrow_in_batches(tar_input_path, batch_size=batch_size)
+        remove_file_if_exists(tar_input_path)
+        with open('./finished.txt', 'a+') as file:
+            file.write(f"{os.path.basename(tar_input_path).split('.')[0]}\n")
+    except:
+        pass
+
+def download_convert(filename, repo_id, id_to_path, root_path):
+    new_file_path = download_file(filename, repo_id, id_to_path, root_path)
+    if os.path.basename(new_file_path).split('.')[-1] =='tar':
+        process_tar_to_arrow_tar(new_file_path)
+
+if __name__ == "__main__":
+
+    root_path = '../YouTube'
+    path_to_meta_data = "./YouTube_files_train_val.json"
+    id_to_path = json.load(open(path_to_meta_data, "r"))
+    hf_model_repos = prepare_file_dict()
+    num_workers = multiprocessing.cpu_count()-1
+    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
+        executor.submit(train)
+        for repo_id in hf_model_repos.keys():
+            for filename in hf_model_repos[repo_id]:
+                executor.submit(download_convert, filename, repo_id, id_to_path, root_path)
