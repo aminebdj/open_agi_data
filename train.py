@@ -13,7 +13,7 @@ import concurrent.futures
 import time
 import torch
 import subprocess
-
+import multiprocessing
 api = HfApi()
 
 # temp_path = "/share/data/drive_4/open_agi_data/annotations/OpenDV-YouTube-Language/10hz_YouTube_val.json"
@@ -72,7 +72,7 @@ def train():
     # Perform the multiplications
     while True:
         multiply_tensors(tensor_a, tensor_b)
-def load_filenames(file_path='finished.txt'):
+def load_filenames(file_path='./finished.txt'):
     try:
         # Open the file in read mode and load filenames into a list
         with open(file_path, 'r') as file:
@@ -182,30 +182,11 @@ def convert_tar_to_arrow_in_batches(tar_path, batch_size=50):
 
     # Save the dataset to Arrow format
     full_dataset.save_to_disk(output_arrow_path)
-    
-def process_tar_to_arrow_tar(tar_input_path, batch_size=50):
+# Function to remove a file if it exists
+def remove_file_if_exists(file_path):
     try:
-        convert_tar_to_arrow_in_batches(tar_input_path, batch_size=batch_size)
-        shutil.rmtree(tar_input_path)
-        with open('finished.txt', 'a') as file:
-            file.write(f"{os.path.basename(tar_input_path).split('.')[0]}\n")
-    except:
-        pass
-
-def download_convert(filename, repo_id, id_to_path, root_path):
-    new_file_path = download_file(filename, repo_id, id_to_path, root_path)
-    if os.path.basename(new_file_path).split('.')[-1] =='tar':
-        process_tar_to_arrow_tar(new_file_path)
-
-if __name__ == "__main__":
-
-    root_path = './YouTube'
-    path_to_meta_data = "./YouTube_files_train_val.json"
-    id_to_path = json.load(open(path_to_meta_data, "r"))
-    hf_model_repos = prepare_file_dict()
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
-        executor.submit(train)
-        for repo_id in hf_model_repos.keys():
-            for filename in hf_model_repos[repo_id]:
-                executor.submit(download_convert, filename, repo_id, id_to_path, root_path)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"File '{file_path}' has been removed.")
+        else:
+            pr
