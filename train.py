@@ -91,7 +91,9 @@ def load_filenames(file_path='./finished.txt'):
         # Open the file in read mode and load filenames into a list
         with open(file_path, 'r') as file:
             filenames = [line.strip() for line in file.readlines()]
-        return filenames
+        with open('./number_processed.txt', 'a+') as file:
+            file.write(f"{len(set(filenames))}\n")
+        return list(set(filenames))
     except FileNotFoundError:
         print(f"{file_path} not found. Returning an empty list.")
         return []
@@ -109,7 +111,9 @@ def prepare_file_dict():
             for file in raw_files:
                 if (f"{file}" in parta_set) or (f"<START>{file}" in parta_set) or (f"<START><START>{file}" in parta_set):
                     keep_files.remove(file)
-                if file.replace('<START>', '').replace(' ', '') in finished_files_list:
+                print(finished_files_list)
+                print(file.replace('<START>', '').replace(' ', '').split('.')[0])
+                if file.replace('<START>', '').replace(' ', '').split('.')[0] in finished_files_list:
                     print(f"[FINISHED] --SKIPPING-- {file.replace('<START>', '').replace(' ', '')}")
                     keep_files.remove(file)
         hf_model_repos[repo_link] = keep_files
