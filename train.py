@@ -110,7 +110,7 @@ def download_file(filename, repo_id, id_to_path, root_path):
     new_file_path = os.path.join(root_path, id_to_path[og_id.split('.')[0]], og_id)
     if not os.path.exists(new_file_path):
         print(f'[DOWNLOAD] downloading {filename} in {new_file_path}')
-        file_path = hf_hub_download(repo_id=repo_id, filename=filename)
+        file_path = hf_hub_download(repo_id=repo_id, filename=filename, local_dir='./temp')
         file_path = os.path.realpath(file_path)
         print(f'[Moving] moving {file_path} to {new_file_path}')
         
