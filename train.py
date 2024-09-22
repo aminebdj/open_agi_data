@@ -111,8 +111,6 @@ def prepare_file_dict():
             for file in raw_files:
                 if (f"{file}" in parta_set) or (f"<START>{file}" in parta_set) or (f"<START><START>{file}" in parta_set):
                     keep_files.remove(file)
-                print(finished_files_list)
-                print(file.replace('<START>', '').replace(' ', '').split('.')[0])
                 if file.replace('<START>', '').replace(' ', '').split('.')[0] in finished_files_list:
                     print(f"[FINISHED] --SKIPPING-- {file.replace('<START>', '').replace(' ', '')}")
                     keep_files.remove(file)
@@ -216,6 +214,11 @@ def process_tar_to_arrow_tar(tar_input_path, batch_size=50):
         remove_file_if_exists(tar_input_path)
         with open('./finished.txt', 'a+') as file:
             file.write(f"{os.path.basename(tar_input_path).split('.')[0]}\n")
+        
+        with open('./finished.txt', 'r') as file:
+            fnames = [line.strip() for line in file.readlines()]
+        with open('./number_processed.txt', 'a+') as file:
+            file.write(f"{len(set(fnames))}\n")
     except:
         pass
 
