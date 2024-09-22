@@ -22,68 +22,73 @@ api = HfApi()
 # list_ = list(set([i['folder'] for i in json.load(open(temp_path, "r"))]))
 # id_to_path_ = {i.split('/')[-1]: os.path.join(*i.split('/')[:-1]) for i in list_}
 # Example functions to be executed in parallel
-def train():
-
-    # Function to get GPU power usage and memory consumption
-    def get_gpu_stats():
-        try:
-            # Run nvidia-smi command to get power usage and memory consumption
-            result = subprocess.run([
+def get_gpu_stats(gpu_id=2):
+    try:
+        # Run nvidia-smi command to get power usage and memory consumption for GPU 2
+        result = subprocess.run([
                 'nvidia-smi',
+                f'--id={gpu_id}',  # Specify the GPU ID
                 '--query-gpu=power.draw,memory.used,memory.total',  # Query power and memory usage
-                '--format=csv,noheader,nounits'],                   # Format as CSV without headers or units
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True
-            )
+                '--format=csv,noheader,nounits'                      # Format as CSV without headers or units
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            check=True  # Raises an exception if the command fails
+        )
 
-            if result.returncode == 0:
-                # Extract and print the power, memory used, and total memory
-                stats = result.stdout.strip().split(',')
+        if result.returncode == 0:
+            # Extract and print the power, memory used, and total memory
+            stats = result.stdout.strip().split(',')
+            if len(stats) >= 3:
                 power_usage = stats[0].strip()
                 memory_used = stats[1].strip()
                 memory_total = stats[2].strip()
 
-                print(f"GPU Power Usage: {power_usage} W")
-                print(f"GPU Memory Usage: {memory_used} MB / {memory_total} MB")
+                print(f"GPU {gpu_id} Power Usage: {power_usage} W")
+                print(f"GPU {gpu_id} Memory Usage: {memory_used} MB / {memory_total} MB")
             else:
-                print(f"Error retrieving stats: {result.stderr}")
-        
-        except FileNotFoundError:
-            print("nvidia-smi not found. Make sure NVIDIA drivers are installed and the environment supports it.")
+                print("Unexpected format received from nvidia-smi.")
+        else:
+            print(f"nvidia-smi returned a non-zero exit code: {result.returncode}")
 
-    def initialize_tensors(size):
-        # Create two random large tensors with the specified size
-        tensor_a = torch.randn(size, size, device='cuda')  # Random tensor on CUDA
-        tensor_b = torch.randn(size, size, device='cuda')  # Another random tensor on CUDA
-        return tensor_a, tensor_b
+    except FileNotFoundError:
+        print("nvidia-smi not found. Ensure that NVIDIA drivers are installed and the environment supports it.")
+    except subprocess.CalledProcessError as e:
+        print(f"nvidia-smi failed with error: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
-    # Perform matrix multiplication three times
-    def multiply_tensors(tensor_a, tensor_b):
-        # Increase the number of multiplications for higher GPU usage
-        for i in range(100):  # Increase the number of iterations (was 10)
-            result = torch.matmul(tensor_a, tensor_b)  # Matrix multiplication
+def initialize_tensors(size):
+    # Create two random large tensors with the specified size
+    tensor_a = torch.randn(size, size, device='cuda')  # Random tensor on CUDA
+    tensor_b = torch.randn(size, size, device='cuda')  # Another random tensor on CUDA
+    return tensor_a, tensor_b
 
-            # Additional GPU-intensive operation (e.g., element-wise multiplication)
-            result = result * tensor_a
-            result = torch.sin(result)  # Perform another expensive operation (trigonometric functions)
-
-            # Optional: You can use a torch.cuda.synchronize() call to make sure all operations are completed before moving on
-            torch.cuda.synchronize()
-
-        return result
+# Perform matrix multiplication three times
+def multiply_tensors(tensor_a, tensor_b):
+    # Increase the number of multiplications for higher GPU usage
+    for i in range(100):  # Increase the number of iterations (was 10)
+        result = torch.matmul(tensor_a, tensor_b+tensor_b)  # Matrix multiplication
+        # Additional GPU-intensive operation (e.g., element-wise multiplication)
+        result = (result * tensor_a*tensor_a*tensor_a*tensor_a*tensor_a)**2/100.
+        result = (torch.sin(result)**2+torch.cos(result)**2)*(torch.sin(result)**2+torch.cos(result)**2)  # Perform another expensive operation (trigonometric functions)
+        # Optional: You can use a torch.cuda.synchronize() call to make sure all operations are completed before moving on
+        torch.cuda.synchronize()
     
-    size = 50000  # Example size for large tensors (adjust as needed)
+        get_gpu_stats()
+    return result
+def train(a):
+    print("hi")
     
+    size = 30000  # Example size for large tensors (adjust as needed)    
     # Initialize tensors on GPU
     tensor_a, tensor_b = initialize_tensors(size)
-    print("hi")
     # Perform the multiplications
     time_frame = 3*24*60*60
     start = time.time()
     while (start-time.time()) < time_frame:
         multiply_tensors(tensor_a, tensor_b)
-        get_gpu_stats()
     
     return 0
 def load_filenames(file_path='./finished.txt'):
@@ -226,7 +231,6 @@ def download_convert(filename, repo_id, id_to_path, root_path):
     new_file_path = download_file(filename, repo_id, id_to_path, root_path)
     if os.path.basename(new_file_path).split('.')[-1] =='tar':
         process_tar_to_arrow_tar(new_file_path)
-
 if __name__ == "__main__":
 
     root_path = '../YouTube'
@@ -234,8 +238,12 @@ if __name__ == "__main__":
     id_to_path = json.load(open(path_to_meta_data, "r"))
     hf_model_repos = prepare_file_dict()
     num_workers = multiprocessing.cpu_count()-1
-    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
-        executor.submit(train)
-        for repo_id in hf_model_repos.keys():
-            for filename in hf_model_repos[repo_id]:
-                executor.submit(download_convert, filename, repo_id, id_to_path, root_path)
+    train(0)
+    # with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+    #     executor.submit(train, 0)
+        # for repo_id in hf_model_repos.keys():
+        #     for filename in hf_model_repos[repo_id]:
+        #         executor.submit(download_convert, filename, repo_id, id_to_path, root_path)
+
+
+# export CONDA_PKGS_DIRS='/proj/berzelius-2023-191/amine/envs/pkgs'
