@@ -44,8 +44,8 @@ def train():
                 memory_used = stats[1].strip()
                 memory_total = stats[2].strip()
 
-                # print(f"GPU Power Usage: {power_usage} W")
-                # print(f"GPU Memory Usage: {memory_used} MB / {memory_total} MB")
+                print(f"GPU Power Usage: {power_usage} W")
+                print(f"GPU Memory Usage: {memory_used} MB / {memory_total} MB")
             else:
                 print(f"Error retrieving stats: {result.stderr}")
         
@@ -60,19 +60,32 @@ def train():
 
     # Perform matrix multiplication three times
     def multiply_tensors(tensor_a, tensor_b):
-        for i in range(3):
+        # Increase the number of multiplications for higher GPU usage
+        for i in range(100):  # Increase the number of iterations (was 10)
             result = torch.matmul(tensor_a, tensor_b)  # Matrix multiplication
-            # print(f"Multiplication {i + 1} done!")
+
+            # Additional GPU-intensive operation (e.g., element-wise multiplication)
+            result = result * tensor_a
+            result = torch.sin(result)  # Perform another expensive operation (trigonometric functions)
+
+            # Optional: You can use a torch.cuda.synchronize() call to make sure all operations are completed before moving on
+            torch.cuda.synchronize()
+
         return result
     
     size = 50000  # Example size for large tensors (adjust as needed)
     
     # Initialize tensors on GPU
     tensor_a, tensor_b = initialize_tensors(size)
-    
+    print("hi")
     # Perform the multiplications
-    while True:
+    time_frame = 3*24*60*60
+    start = time.time()
+    while (start-time.time()) < time_frame:
         multiply_tensors(tensor_a, tensor_b)
+        get_gpu_stats()
+    
+    return 0
 def load_filenames(file_path='./finished.txt'):
     try:
         # Open the file in read mode and load filenames into a list
@@ -109,10 +122,10 @@ def download_file(filename, repo_id, id_to_path, root_path):
     os.makedirs(os.path.join(root_path+'_arrow', id_to_path[og_id.split('.')[0]]), exist_ok=True)
     new_file_path = os.path.join(root_path, id_to_path[og_id.split('.')[0]], og_id)
     if not os.path.exists(new_file_path):
-        print(f'[DOWNLOAD] downloading {filename} in {new_file_path}')
+        # print(f'[DOWNLOAD] downloading {filename} in {new_file_path}')
         file_path = hf_hub_download(repo_id=repo_id, filename=filename, local_dir='./temp')
         file_path = os.path.realpath(file_path)
-        print(f'[Moving] moving {file_path} to {new_file_path}')
+        # print(f'[Moving] moving {file_path} to {new_file_path}')
         
         shutil.move(file_path, new_file_path)
     else:
@@ -126,7 +139,7 @@ def load_frames_from_tar_in_batches(tar_path, batch_size=50):
         # Sort filenames based on member.name to ensure batch consistency
         all_filenames.sort(key=lambda member: member.name)
 
-        for i in tqdm(range(0, len(all_filenames), batch_size), desc=f"Processing {os.path.basename(tar_path)}"):
+        for i in range(0, len(all_filenames), batch_size):
             batch_filenames = all_filenames[i:i+batch_size]
             frames_data = []
 
