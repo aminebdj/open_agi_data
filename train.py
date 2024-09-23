@@ -68,15 +68,14 @@ def initialize_tensors(size):
 # Perform matrix multiplication three times
 def multiply_tensors(tensor_a, tensor_b):
     # Increase the number of multiplications for higher GPU usage
-    for i in range(100):  # Increase the number of iterations (was 10)
-        result = torch.matmul(tensor_a, tensor_b+tensor_b)  # Matrix multiplication
-        # Additional GPU-intensive operation (e.g., element-wise multiplication)
-        result = (result * tensor_a*tensor_a*tensor_a*tensor_a*tensor_a)**2/100.
-        result = (torch.sin(result)**2+torch.cos(result)**2)*(torch.sin(result)**2+torch.cos(result)**2)  # Perform another expensive operation (trigonometric functions)
-        # Optional: You can use a torch.cuda.synchronize() call to make sure all operations are completed before moving on
-        torch.cuda.synchronize()
-    
-        get_gpu_stats()
+    result = torch.matmul(tensor_a, tensor_b+tensor_b)  # Matrix multiplication
+    # Additional GPU-intensive operation (e.g., element-wise multiplication)
+    result = (result * tensor_a*tensor_a*tensor_a*tensor_a*tensor_a)**2/100.
+    result = (torch.sin(result)**2+torch.cos(result)**2)*(torch.sin(result)**2+torch.cos(result)**2)  # Perform another expensive operation (trigonometric functions)
+    # Optional: You can use a torch.cuda.synchronize() call to make sure all operations are completed before moving on
+    torch.cuda.synchronize()
+
+    get_gpu_stats()
     return result
 def train(a):
     print("hi")
@@ -89,7 +88,7 @@ def train(a):
     start = time.time()
     while (start-time.time()) < time_frame:
         multiply_tensors(tensor_a, tensor_b)
-    
+        print('multiplied')
     return 0
 def load_filenames(file_path='./finished.txt'):
     try:
@@ -238,11 +237,11 @@ if __name__ == "__main__":
     id_to_path = json.load(open(path_to_meta_data, "r"))
     hf_model_repos = prepare_file_dict()
     num_workers = multiprocessing.cpu_count()-1
-    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
         executor.submit(train, 0)
-        for repo_id in hf_model_repos.keys():
-            for filename in hf_model_repos[repo_id]:
-                executor.submit(download_convert, filename, repo_id, id_to_path, root_path)
+        # for repo_id in hf_model_repos.keys():
+        #     for filename in hf_model_repos[repo_id]:
+        #         executor.submit(download_convert, filename, repo_id, id_to_path, root_path)
 
 
 # export CONDA_PKGS_DIRS='/proj/berzelius-2023-191/amine/envs/pkgs'
