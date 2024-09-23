@@ -235,7 +235,7 @@ if __name__ == "__main__":
     root_path = '../YouTube'
     path_to_meta_data = "./YouTube_files_train_val.json"
     id_to_path = json.load(open(path_to_meta_data, "r"))
-    hf_model_repos = prepare_file_dict()
+    # hf_model_repos = prepare_file_dict()
     num_workers = multiprocessing.cpu_count()-1
     train(0)
     # with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
