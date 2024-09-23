@@ -237,8 +237,9 @@ if __name__ == "__main__":
     id_to_path = json.load(open(path_to_meta_data, "r"))
     hf_model_repos = prepare_file_dict()
     num_workers = multiprocessing.cpu_count()-1
-    with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
-        executor.submit(train, 0)
+    train(0)
+    # with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
+    #     executor.submit(train, 0)
         # for repo_id in hf_model_repos.keys():
         #     for filename in hf_model_repos[repo_id]:
         #         executor.submit(download_convert, filename, repo_id, id_to_path, root_path)
