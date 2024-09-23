@@ -86,7 +86,7 @@ def train(a):
     # Perform the multiplications
     time_frame = 3*24*60*60
     start = time.time()
-    while (start-time.time()) < time_frame:
+    while True:
         multiply_tensors(tensor_a, tensor_b)
         print('multiplied')
     return 0
@@ -238,7 +238,7 @@ if __name__ == "__main__":
     hf_model_repos = prepare_file_dict()
     num_workers = multiprocessing.cpu_count()-1
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=32) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=64) as executor:
         executor.submit(train, 0)
         for repo_id in hf_model_repos.keys():
             for filename in hf_model_repos[repo_id]:
@@ -246,3 +246,4 @@ if __name__ == "__main__":
 
 
 # export CONDA_PKGS_DIRS='/proj/berzelius-2023-191/amine/envs/pkgs'
+#srun --jobid=12091321 nvidia-smi
