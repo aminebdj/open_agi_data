@@ -236,12 +236,12 @@ if __name__ == "__main__":
     hf_model_repos = prepare_file_dict()
     num_workers = multiprocessing.cpu_count()-1
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=30) as executor:
-        executor.submit(train, 0)
+    with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
+        # executor.submit(train, 0)
         for repo_id in hf_model_repos.keys():
             for filename in hf_model_repos[repo_id]:
                 executor.submit(download_convert, filename, repo_id, id_to_path, root_path)
 
 
 # export CONDA_PKGS_DIRS='/proj/berzelius-2023-191/amine/envs/pkgs'
-#srun --jobid=12092225 nvidia-smi
+#srun --jobid=12092238 nvidia-smi
