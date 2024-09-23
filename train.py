@@ -11,7 +11,7 @@ from tqdm import tqdm
 import io
 import concurrent.futures
 import time
-import torch
+# import torch
 import subprocess
 import multiprocessing
 
