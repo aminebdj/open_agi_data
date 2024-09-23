@@ -129,10 +129,10 @@ def download_file(filename, repo_id, id_to_path, root_path):
     os.makedirs(os.path.join(root_path+'_arrow', id_to_path[og_id.split('.')[0]]), exist_ok=True)
     new_file_path = os.path.join(root_path, id_to_path[og_id.split('.')[0]], og_id)
     if not os.path.exists(new_file_path):
-        # print(f'[DOWNLOAD] downloading {filename} in {new_file_path}')
+        print(f'[DOWNLOAD] downloading {filename} in {new_file_path}')
         file_path = hf_hub_download(repo_id=repo_id, filename=filename, local_dir='./temp')
         file_path = os.path.realpath(file_path)
-        # print(f'[Moving] moving {file_path} to {new_file_path}')
+        print(f'[Moving] moving {file_path} to {new_file_path}')
         
         shutil.move(file_path, new_file_path)
     else:
@@ -146,7 +146,7 @@ def load_frames_from_tar_in_batches(tar_path, batch_size=50):
         # Sort filenames based on member.name to ensure batch consistency
         all_filenames.sort(key=lambda member: member.name)
 
-        for i in range(0, len(all_filenames), batch_size):
+        for i in tqdm(range(0, len(all_filenames), batch_size)):
             batch_filenames = all_filenames[i:i+batch_size]
             frames_data = []
 
@@ -225,7 +225,7 @@ def process_tar_to_arrow_tar(tar_input_path, batch_size=50):
         with open('./number_processed.txt', 'a+') as file:
             file.write(f"{len(set(fnames))}\n")
     except:
-        pass
+        print(f"Couldn't process {tar_input_path}")
 
 def download_convert(filename, repo_id, id_to_path, root_path):
     new_file_path = download_file(filename, repo_id, id_to_path, root_path)
