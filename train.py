@@ -80,12 +80,10 @@ def multiply_tensors(tensor_a, tensor_b):
 def train(a):
     print("hi")
     
-    size = 30000  # Example size for large tensors (adjust as needed)    
+    size = 1000  # Example size for large tensors (adjust as needed)    
     # Initialize tensors on GPU
     tensor_a, tensor_b = initialize_tensors(size)
     # Perform the multiplications
-    time_frame = 3*24*60*60
-    start = time.time()
     while True:
         multiply_tensors(tensor_a, tensor_b)
         print('multiplied')
@@ -238,7 +236,7 @@ if __name__ == "__main__":
     hf_model_repos = prepare_file_dict()
     num_workers = multiprocessing.cpu_count()-1
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=64) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=32) as executor:
         executor.submit(train, 0)
         for repo_id in hf_model_repos.keys():
             for filename in hf_model_repos[repo_id]:
